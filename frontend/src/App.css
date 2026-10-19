@@ -130,8 +130,11 @@ button:hover {
 
 .bom-tree {
   font-family: monospace;
+  
 }
-
+.revision-panel {
+  margin-top: 24px;
+}
 .indent-1 {
   margin-left: 24px;
 }

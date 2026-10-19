@@ -18,3 +18,19 @@ class PartResponse(PartBase):
     model_config = {
         "from_attributes": True
     }
+
+
+class PartRevisionCreate(BaseModel):
+    revision: str
+    lifecycle_state: str
+
+
+class PartRevisionResponse(BaseModel):
+    id: int
+    part_id: int
+    revision: str
+    lifecycle_state: str
+
+    model_config = {
+        "from_attributes": True
+    }

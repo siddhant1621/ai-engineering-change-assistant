@@ -1,4 +1,6 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+
 
 interface Part {
   part_number: string;
@@ -60,7 +62,11 @@ function Parts() {
             <tbody>
               {parts.map((part) => (
                 <tr key={part.part_number}>
-                  <td>{part.part_number}</td>
+                  <td>
+  <Link to={`/parts/${part.part_number}`}>
+    {part.part_number}
+  </Link>
+</td>
                   <td>{part.name}</td>
                   <td>{part.revision}</td>
                   <td>{part.lifecycle_state}</td>

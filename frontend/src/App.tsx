@@ -1,8 +1,9 @@
-import { Routes, Route } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Parts from "./pages/Parts";
+import PartDetail from "./pages/PartDetail";
 import Bom from "./pages/Bom";
 import Changes from "./pages/Changes";
 import AiAnalysis from "./pages/AiAnalysis";
@@ -18,6 +19,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/parts" element={<Parts />} />
+          <Route path="/parts/:partNumber" element={<PartDetail />} />
           <Route path="/bom" element={<Bom />} />
           <Route path="/changes" element={<Changes />} />
           <Route path="/ai-analysis" element={<AiAnalysis />} />

@@ -16,11 +16,20 @@ interface PartRevision {
   lifecycle_state: string;
 }
 
+interface WhereUsedItem {
+  bom_item_id: number;
+  parent_part_number: string;
+  parent_name: string;
+  quantity: number;
+}
+
 function PartDetail() {
   const { partNumber } = useParams();
 
   const [part, setPart] = useState<Part | null>(null);
   const [revisions, setRevisions] = useState<PartRevision[]>([]);
+  const [whereUsed, setWhereUsed] = useState<WhereUsedItem[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -34,8 +43,9 @@ function PartDetail() {
     Promise.all([
       fetch(`http://127.0.0.1:8000/api/parts/${partNumber}`),
       fetch(`http://127.0.0.1:8000/api/parts/${partNumber}/revisions`),
+      fetch(`http://127.0.0.1:8000/api/parts/${partNumber}/where-used`),
     ])
-      .then(async ([partResponse, revisionsResponse]) => {
+      .then(async ([partResponse, revisionsResponse, whereUsedResponse]) => {
         if (!partResponse.ok) {
           throw new Error("Part not found");
         }
@@ -44,11 +54,17 @@ function PartDetail() {
           throw new Error("Could not load revisions");
         }
 
+        if (!whereUsedResponse.ok) {
+          throw new Error("Could not load where-used data");
+        }
+
         const partData = await partResponse.json();
         const revisionsData = await revisionsResponse.json();
+        const whereUsedData = await whereUsedResponse.json();
 
         setPart(partData);
         setRevisions(revisionsData);
+        setWhereUsed(whereUsedData);
         setLoading(false);
       })
       .catch((error) => {
@@ -116,6 +132,34 @@ function PartDetail() {
                 <tr key={revision.id}>
                   <td>{revision.revision}</td>
                   <td>{revision.lifecycle_state}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="panel revision-panel">
+        <h2>Where Used</h2>
+
+        {whereUsed.length === 0 ? (
+          <p>This part is not currently used in any assembly.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Parent Part</th>
+                <th>Assembly Name</th>
+                <th>Quantity</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {whereUsed.map((item) => (
+                <tr key={item.bom_item_id}>
+                  <td>{item.parent_part_number}</td>
+                  <td>{item.parent_name}</td>
+                  <td>{item.quantity}</td>
                 </tr>
               ))}
             </tbody>

@@ -296,7 +296,38 @@ def add_bom_item(
         "child_name": child.name,
         "quantity": db_bom_item.quantity,
     }
+@app.get("/api/parts/{part_number}/where-used")
+def get_where_used(
+    part_number: str,
+    db: Session = Depends(get_db),
+):
+    part = (
+        db.query(models.Part)
+        .filter(models.Part.part_number == part_number)
+        .first()
+    )
 
+    if part is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Part not found",
+        )
+
+    usages = (
+        db.query(models.BomItem)
+        .filter(models.BomItem.child_part_id == part.id)
+        .all()
+    )
+
+    return [
+        {
+            "bom_item_id": item.id,
+            "parent_part_number": item.parent_part.part_number,
+            "parent_name": item.parent_part.name,
+            "quantity": item.quantity,
+        }
+        for item in usages
+    ]
 
 @app.delete("/api/bom-items/{bom_item_id}")
 def delete_bom_item(

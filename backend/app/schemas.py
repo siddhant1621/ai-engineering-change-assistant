@@ -34,3 +34,16 @@ class PartRevisionResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+class BomItemCreate(BaseModel):
+    child_part_number: str
+    quantity: float = 1
+
+
+class BomItemResponse(BaseModel):
+    id: int
+    parent_part_number: str
+    child_part_number: str
+    child_name: str
+    quantity: float

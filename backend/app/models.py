@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -37,4 +37,34 @@ class PartRevision(Base):
     part = relationship(
         "Part",
         back_populates="revisions",
+    )
+
+
+class BomItem(Base):
+    __tablename__ = "bom_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    parent_part_id = Column(
+        Integer,
+        ForeignKey("parts.id"),
+        nullable=False,
+    )
+
+    child_part_id = Column(
+        Integer,
+        ForeignKey("parts.id"),
+        nullable=False,
+    )
+
+    quantity = Column(Float, nullable=False, default=1)
+
+    parent_part = relationship(
+        "Part",
+        foreign_keys=[parent_part_id],
+    )
+
+    child_part = relationship(
+        "Part",
+        foreign_keys=[child_part_id],
     )

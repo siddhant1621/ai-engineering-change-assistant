@@ -34,6 +34,10 @@ def get_db():
         db.close()
 
 
+# ---------------------------------------------------------
+# ROOT / HEALTH
+# ---------------------------------------------------------
+
 @app.get("/")
 def root():
     return {
@@ -48,12 +52,24 @@ def health():
     }
 
 
-@app.get("/api/parts", response_model=list[schemas.PartResponse])
-def get_parts(db: Session = Depends(get_db)):
+# ---------------------------------------------------------
+# PARTS
+# ---------------------------------------------------------
+
+@app.get(
+    "/api/parts",
+    response_model=list[schemas.PartResponse],
+)
+def get_parts(
+    db: Session = Depends(get_db),
+):
     return db.query(models.Part).all()
 
 
-@app.post("/api/parts", response_model=schemas.PartResponse)
+@app.post(
+    "/api/parts",
+    response_model=schemas.PartResponse,
+)
 def create_part(
     part: schemas.PartCreate,
     db: Session = Depends(get_db),
@@ -67,7 +83,10 @@ def create_part(
     return db_part
 
 
-@app.get("/api/parts/{part_number}", response_model=schemas.PartResponse)
+@app.get(
+    "/api/parts/{part_number}",
+    response_model=schemas.PartResponse,
+)
 def get_part(
     part_number: str,
     db: Session = Depends(get_db),
@@ -86,6 +105,10 @@ def get_part(
 
     return part
 
+
+# ---------------------------------------------------------
+# PART REVISIONS
+# ---------------------------------------------------------
 
 @app.get(
     "/api/parts/{part_number}/revisions",
@@ -118,29 +141,6 @@ def get_part_revisions(
     "/api/parts/{part_number}/revisions",
     response_model=schemas.PartRevisionResponse,
 )
-@app.delete("/api/revisions/{revision_id}")
-def delete_revision(
-    revision_id: int,
-    db: Session = Depends(get_db),
-):
-    revision = (
-        db.query(models.PartRevision)
-        .filter(models.PartRevision.id == revision_id)
-        .first()
-    )
-
-    if revision is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Revision not found",
-        )
-
-    db.delete(revision)
-    db.commit()
-
-    return {
-        "message": "Revision deleted successfully"
-    }
 def create_part_revision(
     part_number: str,
     revision: schemas.PartRevisionCreate,
@@ -169,3 +169,155 @@ def create_part_revision(
     db.refresh(db_revision)
 
     return db_revision
+
+
+@app.delete("/api/revisions/{revision_id}")
+def delete_revision(
+    revision_id: int,
+    db: Session = Depends(get_db),
+):
+    revision = (
+        db.query(models.PartRevision)
+        .filter(models.PartRevision.id == revision_id)
+        .first()
+    )
+
+    if revision is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Revision not found",
+        )
+
+    db.delete(revision)
+    db.commit()
+
+    return {
+        "message": "Revision deleted successfully"
+    }
+
+
+# ---------------------------------------------------------
+# BOM
+# ---------------------------------------------------------
+
+@app.get(
+    "/api/parts/{part_number}/bom",
+    response_model=list[schemas.BomItemResponse],
+)
+def get_bom(
+    part_number: str,
+    db: Session = Depends(get_db),
+):
+    parent = (
+        db.query(models.Part)
+        .filter(models.Part.part_number == part_number)
+        .first()
+    )
+
+    if parent is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Parent part not found",
+        )
+
+    bom_items = (
+        db.query(models.BomItem)
+        .filter(models.BomItem.parent_part_id == parent.id)
+        .all()
+    )
+
+    return [
+        {
+            "id": item.id,
+            "parent_part_number": parent.part_number,
+            "child_part_number": item.child_part.part_number,
+            "child_name": item.child_part.name,
+            "quantity": item.quantity,
+        }
+        for item in bom_items
+    ]
+
+
+@app.post(
+    "/api/parts/{part_number}/bom",
+    response_model=schemas.BomItemResponse,
+)
+def add_bom_item(
+    part_number: str,
+    bom_item: schemas.BomItemCreate,
+    db: Session = Depends(get_db),
+):
+    parent = (
+        db.query(models.Part)
+        .filter(models.Part.part_number == part_number)
+        .first()
+    )
+
+    if parent is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Parent part not found",
+        )
+
+    child = (
+        db.query(models.Part)
+        .filter(
+            models.Part.part_number == bom_item.child_part_number
+        )
+        .first()
+    )
+
+    if child is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Child part not found",
+        )
+
+    if parent.id == child.id:
+        raise HTTPException(
+            status_code=400,
+            detail="A part cannot contain itself",
+        )
+
+    db_bom_item = models.BomItem(
+        parent_part_id=parent.id,
+        child_part_id=child.id,
+        quantity=bom_item.quantity,
+    )
+
+    db.add(db_bom_item)
+    db.commit()
+    db.refresh(db_bom_item)
+
+    return {
+        "id": db_bom_item.id,
+        "parent_part_number": parent.part_number,
+        "child_part_number": child.part_number,
+        "child_name": child.name,
+        "quantity": db_bom_item.quantity,
+    }
+
+
+@app.delete("/api/bom-items/{bom_item_id}")
+def delete_bom_item(
+    bom_item_id: int,
+    db: Session = Depends(get_db),
+):
+    bom_item = (
+        db.query(models.BomItem)
+        .filter(models.BomItem.id == bom_item_id)
+        .first()
+    )
+
+    if bom_item is None:
+        raise HTTPException(
+            status_code=404,
+            detail="BOM item not found",
+        )
+
+    db.delete(bom_item)
+    db.commit()
+
+    return {
+        "message": "BOM item deleted successfully"
+    }

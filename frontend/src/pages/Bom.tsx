@@ -1,4 +1,38 @@
+import { useEffect, useState } from "react";
+
+interface BomItem {
+  id: number;
+  parent_part_number: string;
+  child_part_number: string;
+  child_name: string;
+  quantity: number;
+}
+
 function Bom() {
+  const [bomItems, setBomItems] = useState<BomItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/parts/ASSY-100/bom")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load BOM");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setBomItems(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setError("Could not load BOM from backend.");
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <div>
       <div className="page-header">
@@ -7,17 +41,30 @@ function Bom() {
       </div>
 
       <div className="panel">
-        <h2>ECU Assembly</h2>
+        <h2>ASSY-100 — ECU Assembly</h2>
 
-        <div className="bom-tree">
-          <p>ECU Assembly</p>
-          <p className="indent-1">├── ECU-100 Main ECU</p>
-          <p className="indent-1">├── BRK-001 ECU Bracket</p>
-          <p className="indent-1">├── BLT-006 Bolt M6</p>
-          <p className="indent-1">└── HAR-201 Wiring Harness</p>
-          <p className="indent-2">├── CON-101 Connector A</p>
-          <p className="indent-2">└── CON-102 Connector B</p>
-        </div>
+        {loading && <p>Loading BOM...</p>}
+
+        {error && <p>{error}</p>}
+
+        {!loading && !error && (
+          <div className="bom-tree">
+            <p>
+              <strong>ASSY-100 — ECU Assembly</strong>
+            </p>
+
+            {bomItems.map((item, index) => {
+              const isLast = index === bomItems.length - 1;
+
+              return (
+                <p key={item.id} className="indent-1">
+                  {isLast ? "└──" : "├──"} {item.child_part_number}{" "}
+                  {item.child_name} × {item.quantity}
+                </p>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,30 +1,28 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { Routes, Route } from "react-router-dom";
+
+import Sidebar from "./components/Sidebar";
+import Dashboard from "./pages/Dashboard";
+import Parts from "./pages/Parts";
+import Bom from "./pages/Bom";
+import Changes from "./pages/Changes";
+import AiAnalysis from "./pages/AiAnalysis";
+
+import "./App.css";
 
 function App() {
   return (
-    <div style={{ padding: "40px", fontFamily: "Arial, sans-serif" }}>
-      <h1>AI Engineering Change Assistant</h1>
+    <div className="app-layout">
+      <Sidebar />
 
-      <p>
-        A full-stack engineering change management application for parts,
-        BOMs, revisions, and AI-assisted impact analysis.
-      </p>
-
-      <hr />
-
-      <h2>Planned Modules</h2>
-
-      <ul>
-        <li>Dashboard</li>
-        <li>Parts</li>
-        <li>BOM Viewer</li>
-        <li>Engineering Changes</li>
-        <li>AI Impact Analysis</li>
-      </ul>
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/parts" element={<Parts />} />
+          <Route path="/bom" element={<Bom />} />
+          <Route path="/changes" element={<Changes />} />
+          <Route path="/ai-analysis" element={<AiAnalysis />} />
+        </Routes>
+      </main>
     </div>
   );
 }

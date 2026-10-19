@@ -23,12 +23,28 @@ interface WhereUsedItem {
   quantity: number;
 }
 
+interface ImpactItem {
+  part_number: string;
+  name: string;
+  level: number;
+  quantity: number;
+}
+
+interface ImpactResponse {
+  source_part: {
+    part_number: string;
+    name: string;
+  };
+  impacted_assemblies: ImpactItem[];
+}
+
 function PartDetail() {
   const { partNumber } = useParams();
 
   const [part, setPart] = useState<Part | null>(null);
   const [revisions, setRevisions] = useState<PartRevision[]>([]);
   const [whereUsed, setWhereUsed] = useState<WhereUsedItem[]>([]);
+  const [impact, setImpact] = useState<ImpactResponse | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -44,29 +60,43 @@ function PartDetail() {
       fetch(`http://127.0.0.1:8000/api/parts/${partNumber}`),
       fetch(`http://127.0.0.1:8000/api/parts/${partNumber}/revisions`),
       fetch(`http://127.0.0.1:8000/api/parts/${partNumber}/where-used`),
+      fetch(`http://127.0.0.1:8000/api/parts/${partNumber}/impact`),
     ])
-      .then(async ([partResponse, revisionsResponse, whereUsedResponse]) => {
-        if (!partResponse.ok) {
-          throw new Error("Part not found");
+      .then(
+        async ([
+          partResponse,
+          revisionsResponse,
+          whereUsedResponse,
+          impactResponse,
+        ]) => {
+          if (!partResponse.ok) {
+            throw new Error("Part not found");
+          }
+
+          if (!revisionsResponse.ok) {
+            throw new Error("Could not load revisions");
+          }
+
+          if (!whereUsedResponse.ok) {
+            throw new Error("Could not load where-used data");
+          }
+
+          if (!impactResponse.ok) {
+            throw new Error("Could not load impact analysis");
+          }
+
+          const partData = await partResponse.json();
+          const revisionsData = await revisionsResponse.json();
+          const whereUsedData = await whereUsedResponse.json();
+          const impactData = await impactResponse.json();
+
+          setPart(partData);
+          setRevisions(revisionsData);
+          setWhereUsed(whereUsedData);
+          setImpact(impactData);
+          setLoading(false);
         }
-
-        if (!revisionsResponse.ok) {
-          throw new Error("Could not load revisions");
-        }
-
-        if (!whereUsedResponse.ok) {
-          throw new Error("Could not load where-used data");
-        }
-
-        const partData = await partResponse.json();
-        const revisionsData = await revisionsResponse.json();
-        const whereUsedData = await whereUsedResponse.json();
-
-        setPart(partData);
-        setRevisions(revisionsData);
-        setWhereUsed(whereUsedData);
-        setLoading(false);
-      })
+      )
       .catch((error) => {
         console.error(error);
         setError("Could not load part details.");
@@ -159,6 +189,36 @@ function PartDetail() {
                 <tr key={item.bom_item_id}>
                   <td>{item.parent_part_number}</td>
                   <td>{item.parent_name}</td>
+                  <td>{item.quantity}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="panel revision-panel">
+        <h2>Impact Analysis</h2>
+
+        {!impact || impact.impacted_assemblies.length === 0 ? (
+          <p>No impacted assemblies found.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Level</th>
+                <th>Part Number</th>
+                <th>Assembly Name</th>
+                <th>Quantity</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {impact.impacted_assemblies.map((item) => (
+                <tr key={`${item.part_number}-${item.level}`}>
+                  <td>{item.level}</td>
+                  <td>{item.part_number}</td>
+                  <td>{item.name}</td>
                   <td>{item.quantity}</td>
                 </tr>
               ))}

@@ -328,7 +328,162 @@ def get_where_used(
         }
         for item in usages
     ]
+@app.post(
+    "/api/changes",
+    response_model=schemas.EngineeringChangeResponse,
+)
+def create_engineering_change(
+    change: schemas.EngineeringChangeCreate,
+    db: Session = Depends(get_db),
+):
+    affected_part = (
+        db.query(models.Part)
+        .filter(
+            models.Part.part_number
+            == change.affected_part_number
+        )
+        .first()
+    )
 
+    if affected_part is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Affected part not found",
+        )
+
+    db_change = models.EngineeringChange(
+        change_number=change.change_number,
+        title=change.title,
+        description=change.description,
+        reason=change.reason,
+        status=change.status,
+        owner=change.owner,
+        affected_part_id=affected_part.id,
+    )
+
+    db.add(db_change)
+    db.commit()
+    db.refresh(db_change)
+
+    return {
+        "id": db_change.id,
+        "change_number": db_change.change_number,
+        "title": db_change.title,
+        "description": db_change.description,
+        "reason": db_change.reason,
+        "status": db_change.status,
+        "owner": db_change.owner,
+        "affected_part_number": affected_part.part_number,
+    }
+
+@app.get(
+    "/api/changes/{change_number}",
+    response_model=schemas.EngineeringChangeResponse,
+)
+def get_engineering_change(
+    change_number: str,
+    db: Session = Depends(get_db),
+):
+    change = (
+        db.query(models.EngineeringChange)
+        .filter(models.EngineeringChange.change_number == change_number)
+        .first()
+    )
+
+    if change is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Engineering change not found",
+        )
+
+    return {
+        "id": change.id,
+        "change_number": change.change_number,
+        "title": change.title,
+        "description": change.description,
+        "reason": change.reason,
+        "status": change.status,
+        "owner": change.owner,
+        "affected_part_number": change.affected_part.part_number,
+    }
+@app.get("/api/parts/{part_number}/impact")
+def get_part_impact(
+    part_number: str,
+    db: Session = Depends(get_db),
+):
+    part = (
+        db.query(models.Part)
+        .filter(models.Part.part_number == part_number)
+        .first()
+    )
+
+    if part is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Part not found",
+        )
+
+    impacted = []
+    visited = set()
+
+    def find_parents(child_part_id: int, level: int):
+        usages = (
+            db.query(models.BomItem)
+            .filter(models.BomItem.child_part_id == child_part_id)
+            .all()
+        )
+
+        for usage in usages:
+            parent = usage.parent_part
+
+            if parent.id in visited:
+                continue
+
+            visited.add(parent.id)
+
+            impacted.append(
+                {
+                    "part_number": parent.part_number,
+                    "name": parent.name,
+                    "level": level,
+                    "quantity": usage.quantity,
+                }
+            )
+
+            find_parents(parent.id, level + 1)
+
+    find_parents(part.id, 1)
+
+    return {
+        "source_part": {
+            "part_number": part.part_number,
+            "name": part.name,
+        },
+        "impacted_assemblies": impacted,
+    }
+@app.get(
+    "/api/changes",
+    response_model=list[schemas.EngineeringChangeResponse],
+)
+def get_engineering_changes(
+    db: Session = Depends(get_db),
+):
+    changes = db.query(models.EngineeringChange).all()
+
+    return [
+        {
+            "id": change.id,
+            "change_number": change.change_number,
+            "title": change.title,
+            "description": change.description,
+            "reason": change.reason,
+            "status": change.status,
+            "owner": change.owner,
+            "affected_part_number":
+                change.affected_part.part_number,
+        }
+        for change in changes
+    ]
 @app.delete("/api/bom-items/{bom_item_id}")
 def delete_bom_item(
     bom_item_id: int,

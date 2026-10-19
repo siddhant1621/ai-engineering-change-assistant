@@ -19,7 +19,40 @@ class Part(Base):
         cascade="all, delete-orphan",
     )
 
+class EngineeringChange(Base):
+    __tablename__ = "engineering_changes"
 
+    id = Column(Integer, primary_key=True, index=True)
+
+    change_number = Column(
+        String,
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    reason = Column(String, nullable=False)
+
+    status = Column(
+        String,
+        nullable=False,
+        default="Draft",
+    )
+
+    owner = Column(String, nullable=False)
+
+    affected_part_id = Column(
+        Integer,
+        ForeignKey("parts.id"),
+        nullable=False,
+    )
+
+    affected_part = relationship(
+        "Part",
+        foreign_keys=[affected_part_id],
+    )
 class PartRevision(Base):
     __tablename__ = "part_revisions"
 

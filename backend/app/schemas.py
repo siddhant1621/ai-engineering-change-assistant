@@ -1,6 +1,24 @@
 from pydantic import BaseModel
 
+class EngineeringChangeCreate(BaseModel):
+    change_number: str
+    title: str
+    description: str
+    reason: str
+    status: str = "Draft"
+    owner: str
+    affected_part_number: str
 
+
+class EngineeringChangeResponse(BaseModel):
+    id: int
+    change_number: str
+    title: str
+    description: str
+    reason: str
+    status: str
+    owner: str
+    affected_part_number: str
 class PartBase(BaseModel):
     part_number: str
     name: str

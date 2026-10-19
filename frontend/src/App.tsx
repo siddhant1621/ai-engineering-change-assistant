@@ -7,6 +7,7 @@ import PartDetail from "./pages/PartDetail";
 import Bom from "./pages/Bom";
 import Changes from "./pages/Changes";
 import AiAnalysis from "./pages/AiAnalysis";
+import ChangeDetail from "./pages/ChangeDetail";
 
 import "./App.css";
 
@@ -22,6 +23,7 @@ function App() {
           <Route path="/parts/:partNumber" element={<PartDetail />} />
           <Route path="/bom" element={<Bom />} />
           <Route path="/changes" element={<Changes />} />
+          <Route path="/changes/:changeNumber" element={<ChangeDetail />} />
           <Route path="/ai-analysis" element={<AiAnalysis />} />
         </Routes>
       </main>

@@ -1,8 +1,11 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from . import models, schemas
+from .database import Base, SessionLocal, engine
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="AI Engineering Change Assistant API",
@@ -21,6 +24,15 @@ app.add_middleware(
 )
 
 
+def get_db():
+    db = SessionLocal()
+
+    try:
+        yield db
+    finally:
+        db.close()
+
+
 @app.get("/")
 def root():
     return {
@@ -35,31 +47,20 @@ def health():
     }
 
 
-@app.get("/api/parts")
-def get_parts():
-    return [
-        {
-            "part_number": "BRK-001",
-            "name": "ECU Bracket",
-            "revision": "A",
-            "lifecycle_state": "Released",
-        },
-        {
-            "part_number": "BRK-002",
-            "name": "New ECU Bracket",
-            "revision": "A",
-            "lifecycle_state": "Prototype",
-        },
-        {
-            "part_number": "ECU-100",
-            "name": "Main ECU",
-            "revision": "C",
-            "lifecycle_state": "Released",
-        },
-        {
-            "part_number": "HAR-201",
-            "name": "Wiring Harness",
-            "revision": "B",
-            "lifecycle_state": "Released",
-        },
-    ]
+@app.get("/api/parts", response_model=list[schemas.PartResponse])
+def get_parts(db: Session = Depends(get_db)):
+    return db.query(models.Part).all()
+
+
+@app.post("/api/parts", response_model=schemas.PartResponse)
+def create_part(
+    part: schemas.PartCreate,
+    db: Session = Depends(get_db),
+):
+    db_part = models.Part(**part.model_dump())
+
+    db.add(db_part)
+    db.commit()
+    db.refresh(db_part)
+
+    return db_part

@@ -35,6 +35,14 @@ interface ImpactResponse {
   impacted_assemblies: ImpactItem[];
 }
 
+interface AIAnalysis {
+  risk_level: string;
+  summary: string;
+  potential_risks: string[];
+  missing_information: string[];
+  suggested_reviewers: string[];
+}
+
 function ChangeDetail() {
   const { changeNumber } = useParams();
 
@@ -42,8 +50,12 @@ function ChangeDetail() {
   const [part, setPart] = useState<Part | null>(null);
   const [impact, setImpact] = useState<ImpactResponse | null>(null);
 
+  const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [analysisError, setAnalysisError] = useState("");
 
   useEffect(() => {
     if (!changeNumber) {
@@ -93,6 +105,37 @@ function ChangeDetail() {
         setLoading(false);
       });
   }, [changeNumber]);
+
+  const handleAnalyze = async () => {
+    if (!changeNumber) {
+      return;
+    }
+
+    setAnalyzing(true);
+    setAnalysisError("");
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/changes/${changeNumber}/analyze`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("AI analysis failed");
+      }
+
+      const data = await response.json();
+
+      setAnalysis(data);
+    } catch (error) {
+      console.error(error);
+      setAnalysisError("Could not generate AI analysis.");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   if (loading) {
     return <p>Loading engineering change...</p>;
@@ -186,6 +229,52 @@ function ChangeDetail() {
               ))}
             </tbody>
           </table>
+        )}
+      </div>
+
+      <div className="panel revision-panel">
+        <h2>AI Engineering Analysis</h2>
+
+        <button onClick={handleAnalyze} disabled={analyzing}>
+          {analyzing ? "Analyzing..." : "Analyze with AI"}
+        </button>
+
+        {analysisError && <p>{analysisError}</p>}
+
+        {analysis && (
+          <div className="ai-analysis-result">
+            <h3>Risk Level</h3>
+            <p>
+              <strong>{analysis.risk_level}</strong>
+            </p>
+
+            <h3>Summary</h3>
+            <p>{analysis.summary}</p>
+
+            <h3>Potential Risks</h3>
+
+            <ul>
+              {analysis.potential_risks.map((risk, index) => (
+                <li key={index}>{risk}</li>
+              ))}
+            </ul>
+
+            <h3>Missing Information</h3>
+
+            <ul>
+              {analysis.missing_information.map((item, index) => (
+                <li key={index}>{item}</li>
+              ))}
+            </ul>
+
+            <h3>Suggested Reviewers</h3>
+
+            <ul>
+              {analysis.suggested_reviewers.map((reviewer, index) => (
+                <li key={index}>{reviewer}</li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </div>

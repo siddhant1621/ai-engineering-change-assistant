@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from . import models, schemas
 from .database import Base, SessionLocal, engine
+from .ai.service import analyze_engineering_change
 
 
 Base.metadata.create_all(bind=engine)
@@ -82,7 +83,70 @@ def create_part(
 
     return db_part
 
+@app.post(
+    "/api/changes/{change_number}/analyze",
+    response_model=schemas.AIAnalysisResponse,
+)
+def analyze_change(
+    change_number: str,
+    db: Session = Depends(get_db),
+):
+    change = (
+        db.query(models.EngineeringChange)
+        .filter(
+            models.EngineeringChange.change_number == change_number
+        )
+        .first()
+    )
 
+    if change is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Engineering change not found",
+        )
+
+    affected_part = change.affected_part
+
+    impacted = []
+    visited = set()
+
+    def find_parents(child_part_id: int, level: int):
+        usages = (
+            db.query(models.BomItem)
+            .filter(
+                models.BomItem.child_part_id == child_part_id
+            )
+            .all()
+        )
+
+        for usage in usages:
+            parent = usage.parent_part
+
+            if parent.id in visited:
+                continue
+
+            visited.add(parent.id)
+
+            impacted.append(
+                {
+                    "part_number": parent.part_number,
+                    "name": parent.name,
+                    "level": level,
+                    "quantity": usage.quantity,
+                }
+            )
+
+            find_parents(parent.id, level + 1)
+
+    find_parents(affected_part.id, 1)
+
+    analysis = analyze_engineering_change(
+        change=change,
+        affected_part=affected_part,
+        impacted_assemblies=impacted,
+    )
+
+    return analysis
 @app.get(
     "/api/parts/{part_number}",
     response_model=schemas.PartResponse,

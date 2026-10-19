@@ -25,7 +25,6 @@ class PartBase(BaseModel):
     revision: str
     lifecycle_state: str
 
-
 class PartCreate(PartBase):
     pass
 
@@ -65,3 +64,9 @@ class BomItemResponse(BaseModel):
     child_part_number: str
     child_name: str
     quantity: float
+class AIAnalysisResponse(BaseModel):
+    risk_level: str
+    summary: str
+    potential_risks: list[str]
+    missing_information: list[str]
+    suggested_reviewers: list[str]

@@ -1,4 +1,37 @@
+import { useEffect, useState } from "react";
+
+interface Part {
+  part_number: string;
+  name: string;
+  revision: string;
+  lifecycle_state: string;
+}
+
 function Parts() {
+  const [parts, setParts] = useState<Part[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/parts")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load parts");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setParts(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setError("Could not load parts from backend.");
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <div>
       <div className="page-header">
@@ -9,39 +42,33 @@ function Parts() {
       <div className="panel">
         <h2>Parts List</h2>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Part Number</th>
-              <th>Name</th>
-              <th>Revision</th>
-              <th>Lifecycle State</th>
-            </tr>
-          </thead>
+        {loading && <p>Loading parts...</p>}
 
-          <tbody>
-            <tr>
-              <td>BRK-001</td>
-              <td>ECU Bracket</td>
-              <td>A</td>
-              <td>Released</td>
-            </tr>
+        {error && <p>{error}</p>}
 
-            <tr>
-              <td>BRK-002</td>
-              <td>New ECU Bracket</td>
-              <td>A</td>
-              <td>Prototype</td>
-            </tr>
+        {!loading && !error && (
+          <table>
+            <thead>
+              <tr>
+                <th>Part Number</th>
+                <th>Name</th>
+                <th>Revision</th>
+                <th>Lifecycle State</th>
+              </tr>
+            </thead>
 
-            <tr>
-              <td>ECU-100</td>
-              <td>Main ECU</td>
-              <td>C</td>
-              <td>Released</td>
-            </tr>
-          </tbody>
-        </table>
+            <tbody>
+              {parts.map((part) => (
+                <tr key={part.part_number}>
+                  <td>{part.part_number}</td>
+                  <td>{part.name}</td>
+                  <td>{part.revision}</td>
+                  <td>{part.lifecycle_state}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

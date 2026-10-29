@@ -12,6 +12,11 @@ interface EngineeringChange {
   affected_part_number: string;
 }
 
+interface EvidenceItem {
+  source: string;
+  content: string;
+}
+
 interface Part {
   id: number;
   part_number: string;
@@ -41,21 +46,36 @@ interface AIAnalysis {
   potential_risks: string[];
   missing_information: string[];
   suggested_reviewers: string[];
+  sources: string[];
+  evidence: EvidenceItem[];
 }
 
 function ChangeDetail() {
   const { changeNumber } = useParams();
 
-  const [change, setChange] = useState<EngineeringChange | null>(null);
-  const [part, setPart] = useState<Part | null>(null);
-  const [impact, setImpact] = useState<ImpactResponse | null>(null);
+  const [change, setChange] =
+    useState<EngineeringChange | null>(null);
 
-  const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
+  const [part, setPart] =
+    useState<Part | null>(null);
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [analysisError, setAnalysisError] = useState("");
+  const [impact, setImpact] =
+    useState<ImpactResponse | null>(null);
+
+  const [analysis, setAnalysis] =
+    useState<AIAnalysis | null>(null);
+
+  const [analyzing, setAnalyzing] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [analysisError, setAnalysisError] =
+    useState("");
 
   useEffect(() => {
     if (!changeNumber) {
@@ -64,10 +84,14 @@ function ChangeDetail() {
       return;
     }
 
-    fetch(`http://127.0.0.1:8000/api/changes/${changeNumber}`)
+    fetch(
+      `http://127.0.0.1:8000/api/changes/${changeNumber}`
+    )
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Engineering change not found");
+          throw new Error(
+            "Engineering change not found"
+          );
         }
 
         return response.json();
@@ -75,7 +99,10 @@ function ChangeDetail() {
       .then(async (changeData) => {
         setChange(changeData);
 
-        const [partResponse, impactResponse] = await Promise.all([
+        const [
+          partResponse,
+          impactResponse,
+        ] = await Promise.all([
           fetch(
             `http://127.0.0.1:8000/api/parts/${changeData.affected_part_number}`
           ),
@@ -85,15 +112,22 @@ function ChangeDetail() {
         ]);
 
         if (!partResponse.ok) {
-          throw new Error("Could not load affected part");
+          throw new Error(
+            "Could not load affected part"
+          );
         }
 
         if (!impactResponse.ok) {
-          throw new Error("Could not load impact analysis");
+          throw new Error(
+            "Could not load impact analysis"
+          );
         }
 
-        const partData = await partResponse.json();
-        const impactData = await impactResponse.json();
+        const partData =
+          await partResponse.json();
+
+        const impactData =
+          await impactResponse.json();
 
         setPart(partData);
         setImpact(impactData);
@@ -101,7 +135,11 @@ function ChangeDetail() {
       })
       .catch((error) => {
         console.error(error);
-        setError("Could not load engineering change details.");
+
+        setError(
+          "Could not load engineering change details."
+        );
+
         setLoading(false);
       });
   }, [changeNumber]);
@@ -113,6 +151,7 @@ function ChangeDetail() {
 
     setAnalyzing(true);
     setAnalysisError("");
+    setAnalysis(null);
 
     try {
       const response = await fetch(
@@ -123,22 +162,32 @@ function ChangeDetail() {
       );
 
       if (!response.ok) {
-        throw new Error("AI analysis failed");
+        throw new Error(
+          "AI analysis failed"
+        );
       }
 
-      const data = await response.json();
+      const data: AIAnalysis =
+        await response.json();
 
       setAnalysis(data);
     } catch (error) {
       console.error(error);
-      setAnalysisError("Could not generate AI analysis.");
+
+      setAnalysisError(
+        "Could not generate AI analysis."
+      );
     } finally {
       setAnalyzing(false);
     }
   };
 
   if (loading) {
-    return <p>Loading engineering change...</p>;
+    return (
+      <p>
+        Loading engineering change...
+      </p>
+    );
   }
 
   if (error) {
@@ -146,13 +195,20 @@ function ChangeDetail() {
   }
 
   if (!change) {
-    return <p>Engineering change not found.</p>;
+    return (
+      <p>
+        Engineering change not found.
+      </p>
+    );
   }
 
   return (
     <div>
       <div className="page-header">
-        <h1>{change.change_number}</h1>
+        <h1>
+          {change.change_number}
+        </h1>
+
         <p>{change.title}</p>
       </div>
 
@@ -160,19 +216,23 @@ function ChangeDetail() {
         <h2>Change Details</h2>
 
         <p>
-          <strong>Status:</strong> {change.status}
+          <strong>Status:</strong>{" "}
+          {change.status}
         </p>
 
         <p>
-          <strong>Owner:</strong> {change.owner}
+          <strong>Owner:</strong>{" "}
+          {change.owner}
         </p>
 
         <p>
-          <strong>Description:</strong> {change.description}
+          <strong>Description:</strong>{" "}
+          {change.description}
         </p>
 
         <p>
-          <strong>Reason:</strong> {change.reason}
+          <strong>Reason:</strong>{" "}
+          {change.reason}
         </p>
       </div>
 
@@ -182,98 +242,206 @@ function ChangeDetail() {
         {part ? (
           <>
             <p>
-              <strong>Part Number:</strong> {part.part_number}
+              <strong>
+                Part Number:
+              </strong>{" "}
+              {part.part_number}
             </p>
 
             <p>
-              <strong>Name:</strong> {part.name}
+              <strong>Name:</strong>{" "}
+              {part.name}
             </p>
 
             <p>
-              <strong>Revision:</strong> {part.revision}
+              <strong>
+                Revision:
+              </strong>{" "}
+              {part.revision}
             </p>
 
             <p>
-              <strong>Lifecycle State:</strong> {part.lifecycle_state}
+              <strong>
+                Lifecycle State:
+              </strong>{" "}
+              {part.lifecycle_state}
             </p>
           </>
         ) : (
-          <p>No affected part details available.</p>
+          <p>
+            No affected part details
+            available.
+          </p>
         )}
       </div>
 
       <div className="panel revision-panel">
-        <h2>Impacted Assemblies</h2>
+        <h2>
+          Impacted Assemblies
+        </h2>
 
-        {!impact || impact.impacted_assemblies.length === 0 ? (
-          <p>No impacted assemblies found.</p>
+        {!impact ||
+        impact.impacted_assemblies
+          .length === 0 ? (
+          <p>
+            No impacted assemblies
+            found.
+          </p>
         ) : (
           <table>
             <thead>
               <tr>
                 <th>Level</th>
-                <th>Part Number</th>
-                <th>Assembly Name</th>
-                <th>Quantity</th>
+                <th>
+                  Part Number
+                </th>
+                <th>
+                  Assembly Name
+                </th>
+                <th>
+                  Quantity
+                </th>
               </tr>
             </thead>
 
             <tbody>
-              {impact.impacted_assemblies.map((item) => (
-                <tr key={`${item.part_number}-${item.level}`}>
-                  <td>{item.level}</td>
-                  <td>{item.part_number}</td>
-                  <td>{item.name}</td>
-                  <td>{item.quantity}</td>
-                </tr>
-              ))}
+              {impact.impacted_assemblies.map(
+                (item) => (
+                  <tr
+                    key={`${item.part_number}-${item.level}`}
+                  >
+                    <td>
+                      {item.level}
+                    </td>
+
+                    <td>
+                      {
+                        item.part_number
+                      }
+                    </td>
+
+                    <td>
+                      {item.name}
+                    </td>
+
+                    <td>
+                      {
+                        item.quantity
+                      }
+                    </td>
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
         )}
       </div>
 
       <div className="panel revision-panel">
-        <h2>AI Engineering Analysis</h2>
+        <h2>
+          AI Engineering Analysis
+        </h2>
 
-        <button onClick={handleAnalyze} disabled={analyzing}>
-          {analyzing ? "Analyzing..." : "Analyze with AI"}
+        <button
+          onClick={handleAnalyze}
+          disabled={analyzing}
+        >
+          {analyzing
+            ? "Analyzing..."
+            : "Analyze with AI"}
         </button>
 
-        {analysisError && <p>{analysisError}</p>}
+        {analysisError && (
+          <p>{analysisError}</p>
+        )}
 
         {analysis && (
           <div className="ai-analysis-result">
             <h3>Risk Level</h3>
+
             <p>
-              <strong>{analysis.risk_level}</strong>
+              <strong>
+                {analysis.risk_level}
+              </strong>
             </p>
 
             <h3>Summary</h3>
-            <p>{analysis.summary}</p>
 
-            <h3>Potential Risks</h3>
+            <p>
+              {analysis.summary}
+            </p>
 
-            <ul>
-              {analysis.potential_risks.map((risk, index) => (
-                <li key={index}>{risk}</li>
-              ))}
-            </ul>
-
-            <h3>Missing Information</h3>
+            <h3>
+              Potential Risks
+            </h3>
 
             <ul>
-              {analysis.missing_information.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
+              {analysis.potential_risks.map(
+                (risk, index) => (
+                  <li key={index}>
+                    {risk}
+                  </li>
+                )
+              )}
             </ul>
 
-            <h3>Suggested Reviewers</h3>
+            <h3>
+              Missing Information
+            </h3>
 
             <ul>
-              {analysis.suggested_reviewers.map((reviewer, index) => (
-                <li key={index}>{reviewer}</li>
-              ))}
+              {analysis.missing_information.map(
+                (item, index) => (
+                  <li key={index}>
+                    {item}
+                  </li>
+                )
+              )}
             </ul>
+
+            <h3>
+              Suggested Reviewers
+            </h3>
+
+            <ul>
+              {analysis.suggested_reviewers.map(
+                (
+                  reviewer,
+                  index
+                ) => (
+                  <li key={index}>
+                    {reviewer}
+                  </li>
+                )
+              )}
+            </ul>
+
+            <h3>Sources</h3>
+
+            {analysis.evidence.length === 0 ? (
+              <p>
+                No evidence snippets were retrieved.
+              </p>
+            ) : (
+              <div>
+                {analysis.evidence.map(
+                  (item, index) => (
+                    <div
+                      key={`${item.source}-${index}`}
+                      className="evidence-card"
+                    >
+                      <strong>
+                        {item.source}
+                      </strong>
+
+                      <p>
+                        {item.content}
+                      </p>
+                    </div>
+                  )
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

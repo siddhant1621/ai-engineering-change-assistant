@@ -1,29 +1,12 @@
 from pydantic import BaseModel
 
-class EngineeringChangeCreate(BaseModel):
-    change_number: str
-    title: str
-    description: str
-    reason: str
-    status: str = "Draft"
-    owner: str
-    affected_part_number: str
 
-
-class EngineeringChangeResponse(BaseModel):
-    id: int
-    change_number: str
-    title: str
-    description: str
-    reason: str
-    status: str
-    owner: str
-    affected_part_number: str
 class PartBase(BaseModel):
     part_number: str
     name: str
     revision: str
     lifecycle_state: str
+
 
 class PartCreate(PartBase):
     pass
@@ -64,9 +47,37 @@ class BomItemResponse(BaseModel):
     child_part_number: str
     child_name: str
     quantity: float
+
+
+class EngineeringChangeCreate(BaseModel):
+    change_number: str
+    title: str
+    description: str
+    reason: str
+    status: str = "Draft"
+    owner: str
+    affected_part_number: str
+
+
+class EngineeringChangeResponse(BaseModel):
+    id: int
+    change_number: str
+    title: str
+    description: str
+    reason: str
+    status: str
+    owner: str
+    affected_part_number: str
+
+class EvidenceItem(BaseModel):
+    source: str
+    content: str
+
 class AIAnalysisResponse(BaseModel):
     risk_level: str
     summary: str
     potential_risks: list[str]
     missing_information: list[str]
     suggested_reviewers: list[str]
+    sources: list[str]
+    evidence: list[EvidenceItem]

@@ -1,0 +1,18 @@
+Wiring Harness Routing Guidelines
+
+Wiring harness routing changes should verify:
+
+- minimum clearance from adjacent components
+- bend radius
+- connector strain relief
+- abrasion and chafing risk
+- clamp and support locations
+- thermal exposure
+- vibration movement
+- electrical connector integrity
+
+Routing changes should be validated under expected vibration and thermal conditions.
+
+Changes affecting harness routing near structural or moving components should receive mechanical and electrical review.
+
+Updated routing should be documented before release.

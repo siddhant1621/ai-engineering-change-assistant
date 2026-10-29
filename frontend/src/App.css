@@ -159,9 +159,57 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+.evidence-card {
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #f9fafb;
+}
 
+.evidence-card p {
+  margin-bottom: 0;
+  line-height: 1.6;
+}
 @media (max-width: 900px) {
   .card-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+.change-form {
+  display: grid;
+  gap: 16px;
+  max-width: 700px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.form-group input:disabled {
+  background: #f3f4f6;
+}
+
+.form-error {
+  margin: 0;
+  font-weight: 600;
 }

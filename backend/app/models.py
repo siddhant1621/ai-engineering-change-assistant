@@ -16,54 +16,14 @@ class Part(Base):
     revisions = relationship(
         "PartRevision",
         back_populates="part",
-        cascade="all, delete-orphan",
     )
 
-class EngineeringChange(Base):
-    __tablename__ = "engineering_changes"
 
-    id = Column(Integer, primary_key=True, index=True)
-
-    change_number = Column(
-        String,
-        unique=True,
-        nullable=False,
-        index=True,
-    )
-
-    title = Column(String, nullable=False)
-    description = Column(String, nullable=False)
-    reason = Column(String, nullable=False)
-
-    status = Column(
-        String,
-        nullable=False,
-        default="Draft",
-    )
-
-    owner = Column(String, nullable=False)
-
-    affected_part_id = Column(
-        Integer,
-        ForeignKey("parts.id"),
-        nullable=False,
-    )
-
-    affected_part = relationship(
-        "Part",
-        foreign_keys=[affected_part_id],
-    )
 class PartRevision(Base):
     __tablename__ = "part_revisions"
 
     id = Column(Integer, primary_key=True, index=True)
-
-    part_id = Column(
-        Integer,
-        ForeignKey("parts.id"),
-        nullable=False,
-    )
-
+    part_id = Column(Integer, ForeignKey("parts.id"), nullable=False)
     revision = Column(String, nullable=False)
     lifecycle_state = Column(String, nullable=False)
 
@@ -100,4 +60,40 @@ class BomItem(Base):
     child_part = relationship(
         "Part",
         foreign_keys=[child_part_id],
+    )
+
+
+class EngineeringChange(Base):
+    __tablename__ = "engineering_changes"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    change_number = Column(
+        String,
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    reason = Column(String, nullable=False)
+
+    status = Column(
+        String,
+        nullable=False,
+        default="Draft",
+    )
+
+    owner = Column(String, nullable=False)
+
+    affected_part_id = Column(
+        Integer,
+        ForeignKey("parts.id"),
+        nullable=False,
+    )
+
+    affected_part = relationship(
+        "Part",
+        foreign_keys=[affected_part_id],
     )

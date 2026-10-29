@@ -1,0 +1,14 @@
+Vibration Validation Guidelines
+
+Any structural component changed because of vibration failure should be revalidated.
+
+Validation should consider:
+- resonance behavior
+- fastener integrity
+- fatigue resistance
+- mounting stiffness
+- interface compatibility
+
+Changes affecting assemblies at multiple product levels should receive additional system-level review.
+
+Mechanical and validation engineering should review structural changes related to vibration failures.

@@ -1,0 +1,11 @@
+Bracket Design Guidelines
+
+Bracket modifications should verify:
+- material compatibility
+- geometry and clearances
+- bolt interfaces
+- mounting loads
+- vibration response
+- fatigue performance
+
+A replacement bracket should not be released without confirming compatibility with surrounding components.
